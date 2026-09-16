@@ -304,6 +304,7 @@ class Interpreter implements Expr.Visitor<Object>,
 //< check-minus-operand
         return (double)left - (double)right;
 //> binary-plus
+// ________________________________________________________________________________
       case PLUS:
         if (left instanceof Double && right instanceof Double) {
           return (double)left + (double)right;
@@ -312,7 +313,15 @@ class Interpreter implements Expr.Visitor<Object>,
         if (left instanceof String && right instanceof String) {
           return (String)left + (String)right;
         }
-
+        if (left instanceof Double && right instanceof String) {
+            String strng = stringify(left);//turn Double in left to tring
+            return strng + (String)right; //return result of double and string to fully be string
+          } // [plus]
+        if(left instanceof String && right instanceof Double){
+            String STRNG = stringify(right);//turn double in right to string
+            return (String)left + STRNG;
+//___________________________________________________________________________________________________
+        }
 
 
 /* Evaluating Expressions binary-plus < Evaluating Expressions string-wrong-type
