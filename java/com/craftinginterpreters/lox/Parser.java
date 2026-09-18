@@ -388,8 +388,23 @@ class Parser {
   }
 //< Control Flow and
 //> equality
+//----------------------------------------------------------------------------------------------------------
   private Expr equality() {
-    Expr expr = comparison();
+    Expr expr;
+
+    if(match(BANG_EQUAL, EQUAL_EQUAL)) {
+        //looks at == or !=
+      Token operator = previous();//set previous token as operator, but since there is nothing for this error it will spit an error
+      error(operator, "The left hand operand is missing");
+      //discard that operator
+      Expr discard = comparison();
+      //discard as temp variable that was parsed, will not need or use
+        //THE SAME LOGIC WILL BE USED FOR THE OTHER METHODS AS WELL
+      return null;
+    } else {
+      expr = comparison();
+    }
+
 
     while (match(BANG_EQUAL, EQUAL_EQUAL)) {
       Token operator = previous();
@@ -402,7 +417,17 @@ class Parser {
 //< equality
 //> comparison
   private Expr comparison() {
-    Expr expr = term();
+    Expr expr;
+    if(match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
+      Token operator = previous();
+      error(operator, "The left hand operand is missing");
+
+      Expr discard =  term();
+      return null;
+    } else {
+      expr = term();
+    }
+
 
     while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
       Token operator = previous();
@@ -415,7 +440,16 @@ class Parser {
 //< comparison
 //> term
   private Expr term() {
-    Expr expr = factor();
+    Expr expr;
+    if(match(PLUS)) {//leave out MINUS due to negative numbers being accepted in expression
+      Token operator = previous();
+      error(operator, "The left hand operand is missing");
+      Expr discard = factor();
+      return null;
+    } else {
+      expr = factor();
+    }
+
 
     while (match(MINUS, PLUS)) {
       Token operator = previous();
@@ -428,7 +462,15 @@ class Parser {
 //< term
 //> factor
   private Expr factor() {
-    Expr expr = unary();
+    Expr expr;
+    if(match(SLASH, STAR)){
+      Token operator = previous();
+      error(operator, "The left hand operand is missing");
+      Expr discard = unary();
+      return null;
+    } else {
+      expr = unary();
+    }
 
     while (match(SLASH, STAR)) {
       Token operator = previous();
@@ -438,6 +480,7 @@ class Parser {
 
     return expr;
   }
+  //----------------------------------------------------------------------------------------------
 //< factor
 //> unary
   private Expr unary() {
