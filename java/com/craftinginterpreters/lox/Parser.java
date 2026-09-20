@@ -13,11 +13,12 @@ import static com.craftinginterpreters.lox.TokenType.*;
 
 class Parser {
 //> parse-error
-  private static class ParseError extends RuntimeException {}
+  public static class ParseError extends RuntimeException {}
 
 //< parse-error
   private final List<Token> tokens;
   private int current = 0;
+  public boolean ifError = true;
 
   Parser(List<Token> tokens) {
     this.tokens = tokens;
@@ -58,6 +59,10 @@ class Parser {
       //return comma();//comma → equality ( "," equality )* ; -------> expression → comma ;
 //Starting point lowest precedence under expression(not method), so lowest overall
 //< Statements and State expression
+  }
+  Expr parseExpression(){
+      return assignment();//returns one expression
+
   }
   private Expr comma(){
       Expr expr = assignment();// gets the first expression
@@ -628,7 +633,8 @@ class Parser {
 //< utils
 //> error
   private ParseError error(Token token, String message) {
-    Lox.error(token, message);
+    if (ifError){Lox.error(token, message);}
+
     return new ParseError();
   }
 //< error

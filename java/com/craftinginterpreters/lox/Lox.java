@@ -53,13 +53,34 @@ public class Lox {
       System.out.print("> ");
       String line = reader.readLine();
       if (line == null) break;
-      run(line);
+      HMRunPromptLn(line);
 //> reset-had-error
       hadError = false;
 //< reset-had-error
     }
   }
 //< prompt
+//helper method
+  private static void  HMRunPromptLn(String source){
+     Scanner scanner = new Scanner(source);//what user typed
+     List<Token> tokens = scanner.scanTokens();//put them as tokens
+     Parser parser = new Parser(tokens);//give tokens to parser
+     //the basis of the code above is following the same structure of the other methods;
+
+     try {
+         parser.ifError = false;//if there is no error in parser
+         //print out the output of the evaluated expression
+         //took tokens from input and turned into expression, then take the expression and give to interpreter, then print
+         System.out.println(interpreter.evaluate(parser.parseExpression()));
+     }//Execute statement to be interpreted
+     catch (Parser.ParseError error){//else creates new parser with same tokens, and parses it as a statement instead. This is how they are able to be distinguished differently.
+         Parser Parsernew = new Parser(tokens);
+         interpreter.interpret(Parsernew.parse());
+
+     }
+
+  }
+
 //> run
   private static void run(String source) {
     Scanner scanner = new Scanner(source);
@@ -105,6 +126,7 @@ public class Lox {
 //< Statements and State interpret-statements
   }
 //< run
+
 //> lox-error
   static void error(int line, String message) {
     report(line, "", message);

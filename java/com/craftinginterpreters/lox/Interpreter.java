@@ -32,7 +32,7 @@ class Interpreter implements Expr.Visitor<Object>,
   private final Map<Expr, Integer> locals = new HashMap<>();
 //< Resolving and Binding locals-field
 //> Statements and State environment-field
-
+  private static Object uninitializedVar = new Object();
 //< Statements and State environment-field
 //> Functions interpreter-constructor
   Interpreter() {
@@ -74,7 +74,7 @@ class Interpreter implements Expr.Visitor<Object>,
   }
 //< Statements and State interpret
 //> evaluate
-  private Object evaluate(Expr expr) {
+public Object evaluate(Expr expr) {
     return expr.accept(this);
   }
 //< evaluate
@@ -223,7 +223,7 @@ class Interpreter implements Expr.Visitor<Object>,
 //> Statements and State visit-var
   @Override
   public Void visitVarStmt(Stmt.Var stmt) {
-    Object value = null;
+    Object value = uninitializedVar;
     if (stmt.initializer != null) {
       value = evaluate(stmt.initializer);
     }
@@ -502,9 +502,17 @@ class Interpreter implements Expr.Visitor<Object>,
   public Object visitVariableExpr(Expr.Variable expr) {
 /* Statements and State visit-variable < Resolving and Binding call-look-up-variable
     return environment.get(expr.name);
-*/
+    //current environment object retrieves var value to use for comparison to initialized value, if no value then error
+*/  if(environment.get(expr.name) == uninitializedVar){
+    //throw runtime error if the variable is not initialized
+      throw new RuntimeError(expr.name, "You must initialize a variable before using");
+
+      }
 //> Resolving and Binding call-look-up-variable
-    return lookUpVariable(expr.name, expr);
+      //else return the initialized value
+    else {
+      return environment.get(expr.name);
+      }
 //< Resolving and Binding call-look-up-variable
   }
 //> Resolving and Binding look-up-variable
