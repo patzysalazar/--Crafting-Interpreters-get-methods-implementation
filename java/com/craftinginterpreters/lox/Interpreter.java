@@ -62,6 +62,8 @@ class Interpreter implements Expr.Visitor<Object>,
     }
   }
 */
+
+  public static class BreakExept extends RuntimeException{}
 //> Statements and State interpret
   void interpret(List<Stmt> statements) {
     try {
@@ -173,7 +175,13 @@ public Object evaluate(Expr expr) {
   public Void visitExpressionStmt(Stmt.Expression stmt) {
     evaluate(stmt.expression);
     return null;
+
   }
+@Override
+  public Void visitBreakStmt(Stmt.Break stmt){
+    throw new BreakExept();
+  }
+
 //< Statements and State visit-expression-stmt
 //> Functions visit-function
   @Override
@@ -235,8 +243,12 @@ public Object evaluate(Expr expr) {
 //> Control Flow visit-while
   @Override
   public Void visitWhileStmt(Stmt.While stmt) {
-    while (isTruthy(evaluate(stmt.condition))) {
-      execute(stmt.body);
+    try {//while loop - if true then execute what is in the while loop, else do not do anything and do not execute loop
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+    }   catch (BreakExept exept){
+
     }
     return null;
   }

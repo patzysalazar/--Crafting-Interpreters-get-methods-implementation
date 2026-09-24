@@ -19,6 +19,7 @@ class Parser {
   private final List<Token> tokens;
   private int current = 0;
   public boolean ifError = true;
+  private int loops = 0;
 
   Parser(List<Token> tokens) {
     this.tokens = tokens;
@@ -148,6 +149,7 @@ class Parser {
 //< Control Flow match-while
 //> parse-block
     if (match(LEFT_BRACE)) return new Stmt.Block(block());
+    if (match(BREAK)) return breakStatement();//if the new token is break then create new break statement// calls Stmt.Break(); with ; checking
 //< parse-block
 
     return expressionStatement();
@@ -187,8 +189,9 @@ class Parser {
     consume(RIGHT_PAREN, "Expect ')' after for clauses.");
 //< for-increment
 //> for-body
+    loops++;//same loop check added in forStatement
     Stmt body = statement();
-
+    loops--;
 //> for-desugar-increment
     if (increment != null) {
       body = new Stmt.Block(
@@ -246,6 +249,22 @@ class Parser {
     consume(SEMICOLON, "Expect ';' after return value.");
     return new Stmt.Return(keyword, value);
   }
+
+  private Stmt breakStatement() {
+      consume(SEMICOLON, "Expect ';' after the Break");//sees if break is followed by semicolon then creates new object
+      //return new Stmt.Break();//returns to parser
+
+      if (loops == 0) {//syntax error
+          error(peek(), "cannot have break outside of the loop");
+      } else {//allows break
+          return new Stmt.Break();
+
+      }
+
+
+      return null;
+  }
+
 //< Functions parse-return-statement
 //> Statements and State parse-var-declaration
   private Stmt varDeclaration() {
@@ -265,8 +284,11 @@ class Parser {
     consume(LEFT_PAREN, "Expect '(' after 'while'.");
     Expr condition = expression();
     consume(RIGHT_PAREN, "Expect ')' after condition.");
-    Stmt body = statement();
+    //Stmt body = statement();
 
+    loops++;
+    Stmt body = statement();//parse code inside the loop
+    loops --;
     return new Stmt.While(condition, body);
   }
 //< Control Flow while-statement

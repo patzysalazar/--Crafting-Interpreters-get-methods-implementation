@@ -14,6 +14,7 @@ abstract class Stmt {
     R visitReturnStmt(Return stmt);
     R visitVarStmt(Var stmt);
     R visitWhileStmt(While stmt);
+    R visitBreakStmt(Break stmt);
   }
 
   // Nested Stmt classes here...
@@ -49,6 +50,15 @@ abstract class Stmt {
     final Token name;
     final Expr.Variable superclass;
     final List<Stmt.Function> methods;
+  }
+  static class Break extends Stmt{
+      Break(){}
+//break does not contain any information
+      @Override//when interpreter visits break, use this method below
+      <R> R accept(Visitor<R> visitor) {
+          return visitor.visitBreakStmt(this);
+      }
+      //pass break statement to visitor
   }
 //< stmt-class
 //> stmt-expression
