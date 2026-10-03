@@ -9,11 +9,12 @@ import java.util.Stack;
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
 //> scopes-field
-  private final Stack<Map<String, Boolean>> scopes = new Stack<>();
+  private final Stack<Map<String, Variable>> scopes = new Stack<>();
 //< scopes-field
 //> function-type-field
   private FunctionType currentFunction = FunctionType.NONE;
 //< function-type-field
+
 
   Resolver(Interpreter interpreter) {
     this.interpreter = interpreter;
@@ -56,6 +57,11 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
   }
 //< resolve-statements
+    public static class Variable{
+      Token name;
+      boolean declared, defined, read;//tracks vars 3 states, later on can use for errors
+
+    }
 
     @Override
     public Void visitFunctExpr(Expr.Funct expr){
@@ -111,14 +117,18 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     if (stmt.superclass != null) {
       beginScope();
-      scopes.peek().put("super", true);
+      Variable var = new Variable();
+      var.defined = true;
+      scopes.peek().put("super", var);
     }
 //< Inheritance begin-super-scope
 //> resolve-methods
 
 //> resolver-begin-this-scope
     beginScope();
-    scopes.peek().put("this", true);
+    Variable var = new Variable();
+    var.defined = true;
+    scopes.peek().put("this", var);
 
 //< resolver-begin-this-scope
     for (Stmt.Function method : stmt.methods) {
@@ -345,8 +355,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 //> visit-variable-expr
   @Override
   public Void visitVariableExpr(Expr.Variable expr) {
-    if (!scopes.isEmpty() &&
-        scopes.peek().get(expr.name.lexeme) == Boolean.FALSE) {
+    if (!scopes.isEmpty() && //if scope, variable in scope and variable not defined yet
+            scopes.peek().get(expr.name.lexeme)!= null && !scopes.peek().get(expr.name.lexeme).defined ) {
       Lox.error(expr.name,
           "Can't read local variable in its own initializer.");
     }
@@ -390,19 +400,26 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 //< resolve-function
 //> begin-scope
   private void beginScope() {
-    scopes.push(new HashMap<String, Boolean>());
+    scopes.push(new HashMap<String, Variable>());
   }
 //< begin-scope
 //> end-scope
   private void endScope() {
-    scopes.pop();
+    // go to all key pair in scope(entry) and call pair pair
+    for(Map.Entry<String, Variable> keyPair : scopes.peek().entrySet()) {
+          if (!keyPair.getValue().read && !keyPair.getKey().equals("super") && !keyPair.getKey().equals("this")) {//skip this and super entries
+            Lox.error(keyPair.getValue().name, "Local Variable not used");
+          }
+
+      }
+      scopes.pop();
   }
 //< end-scope
 //> declare
   private void declare(Token name) {
     if (scopes.isEmpty()) return;
 
-    Map<String, Boolean> scope = scopes.peek();
+    Map<String, Variable> scope = scopes.peek();
 //> duplicate-variable
     if (scope.containsKey(name.lexeme)) {
       Lox.error(name,
@@ -410,20 +427,23 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
 //< duplicate-variable
-    scope.put(name.lexeme, false);
+    Variable var = new Variable();//var object created
+    var.name = name;//vars token saved
+    scope.put(name.lexeme, var);//stores object using vars name
   }
 //< declare
 //> define
   private void define(Token name) {
     if (scopes.isEmpty()) return;
-    scopes.peek().put(name.lexeme, true);
+    scopes.peek().get(name.lexeme).defined = true;
   }
 //< define
 //> resolve-local
   private void resolveLocal(Expr expr, Token name) {
-    for (int i = scopes.size() - 1; i >= 0; i--) {
+    for (int i = scopes.size() - 1; i >= 0; i--) {//if scope contains var
       if (scopes.get(i).containsKey(name.lexeme)) {
-        interpreter.resolve(expr, scopes.size() - 1 - i);
+        scopes.get(i).get(name.lexeme).read = true;//if read mark true  since used/read
+        interpreter.resolve(expr, scopes.size() - 1 - i);//updates on changing bool to var for beginscope, declared and define
         return;
       }
     }
