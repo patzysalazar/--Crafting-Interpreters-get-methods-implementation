@@ -6,6 +6,11 @@ public class RPNnotation implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitFunctExpr(Expr.Funct expr){
+        return "";
+    }
+
+    @Override
     public String visitLiteralExpr( Expr.Literal lit){//visitor method will return the strings
         return String.valueOf(lit.value);// converts the object value into a string
        

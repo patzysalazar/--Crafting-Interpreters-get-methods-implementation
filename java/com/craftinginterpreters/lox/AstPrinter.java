@@ -23,6 +23,8 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 //> visit-methods
 //> Statements and State omit
   @Override
+  public String visitFunctExpr(Expr.Funct expr){return "";}
+  @Override
   public String visitBlockStmt(Stmt.Block stmt) {
     StringBuilder builder = new StringBuilder();
     builder.append("(block ");
@@ -74,14 +76,14 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     StringBuilder builder = new StringBuilder();
     builder.append("(fun " + stmt.name.lexeme + "(");
 
-    for (Token param : stmt.params) {
-      if (param != stmt.params.get(0)) builder.append(" ");
+    for (Token param : stmt.funct.param) {
+      if (param != stmt.funct.param.get(0)) builder.append(" ");
       builder.append(param.lexeme);
     }
 
     builder.append(") ");
 
-    for (Stmt body : stmt.body) {
+    for (Stmt body : stmt.funct.body) {
       builder.append(body.accept(this));
     }
 

@@ -56,6 +56,17 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
   }
 //< resolve-statements
+
+    @Override
+    public Void visitFunctExpr(Expr.Funct expr){
+      beginScope();
+      for(Token param : expr.param){
+          declare(param);
+          define(param);
+      }
+      endScope();
+      return null;
+    }
 //> visit-block-stmt
     @Override
     public Void visitBreakStmt(Stmt.Break stmt){
@@ -118,7 +129,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       }
 
 //< resolver-initializer-type
-      resolveFunction(method, declaration); // [local]
+      resolveFunction(method.funct, declaration); // [local]
     }
 
 //> resolver-end-this-scope
@@ -153,7 +164,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     resolveFunction(stmt);
 */
 //> pass-function-type
-    resolveFunction(stmt, FunctionType.FUNCTION);
+    resolveFunction(stmt.funct, FunctionType.FUNCTION);
 //< pass-function-type
     return null;
   }
@@ -360,13 +371,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 */
 //> set-current-function
   private void resolveFunction(
-      Stmt.Function function, FunctionType type) {
+      Expr.Funct function, FunctionType type) {
     FunctionType enclosingFunction = currentFunction;
     currentFunction = type;
 
 //< set-current-function
     beginScope();
-    for (Token param : function.params) {
+    for (Token param : function.param) {
       declare(param);
       define(param);
     }

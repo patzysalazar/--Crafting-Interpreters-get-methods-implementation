@@ -18,6 +18,7 @@ abstract class Expr {
     R visitUnaryExpr(Unary expr);
     R visitVariableExpr(Variable expr);
     R visitConditionalExpr(Conditional expr);
+    R visitFunctExpr(Funct expr);
   }
 
   // Nested Expr classes here...
@@ -87,6 +88,24 @@ abstract class Expr {
     final Expr trueValue;
     final Expr falseValue;
 }
+//adding a constructor to setup AF - allows fcn object to be created and initialized with param and body
+    //Anonymous function now is an expression
+  static class Funct extends Expr{
+    Funct(List<Token> param, List<Stmt> body) {
+         this.param = param;
+         this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+          return visitor.visitFunctExpr(this);
+      }
+
+    final List<Token> param;
+    final List<Stmt> body;
+
+  }
+
 //> expr-get
   static class Get extends Expr {
     Get(Expr object, Token name) {

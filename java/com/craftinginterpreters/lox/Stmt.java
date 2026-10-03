@@ -76,21 +76,23 @@ abstract class Stmt {
   }
 //< stmt-expression
 //> stmt-function
+    // changed this to store only what the function and anonymous function share
   static class Function extends Stmt {
-    Function(Token name, List<Token> params, List<Stmt> body) {
+    Function( Token name, Expr.Funct funct) {
+      //this.name = name;
       this.name = name;
-      this.params = params;
-      this.body = body;
+      this.funct = funct;
     }
+
 
     @Override
     <R> R accept(Visitor<R> visitor) {
       return visitor.visitFunctionStmt(this);
     }
 
+    //final Token name;
     final Token name;
-    final List<Token> params;
-    final List<Stmt> body;
+    final Expr.Funct funct;
   }
 //< stmt-function
 //> stmt-if

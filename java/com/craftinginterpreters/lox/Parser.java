@@ -92,7 +92,10 @@ class Parser {
       if (match(CLASS)) return classDeclaration();
 //< Classes match-class
 //> Functions match-fun
-      if (match(FUN)) return function("function");
+      if (check(FUN) && checkNextToken(IDENTIFIER)){
+       consume(FUN, null) ;
+       return function("function");
+        }
 //< Functions match-fun
       if (match(VAR)) return varDeclaration();
 
@@ -300,10 +303,20 @@ class Parser {
   }
 //< Statements and State parse-expression-statement
 //> Functions parse-function
-  private Stmt.Function function(String kind) {
-    Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+  private Stmt.Function function(String kind){
+    Token name = consume(IDENTIFIER, "Expect '(' "+ kind +" fun.");
+    return new Stmt.Function(name, functBody(kind));
+  }
+  private Expr.Funct AnonymousFunction(String kind){
+    //Token name = consume(IDENTIFIER, "Expect '(' "+ kind +" fun.");
+    return functBody(kind);
+  }
+
+
+  private Expr.Funct functBody(String kind) {
+    //Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
 //> parse-parameters
-    consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+    consume(LEFT_PAREN, "Expect '(' "+ kind +" fun.");
     List<Token> parameters = new ArrayList<>();
     if (!check(RIGHT_PAREN)) {
       do {
@@ -321,7 +334,7 @@ class Parser {
 
     consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
     List<Stmt> body = block();
-    return new Stmt.Function(name, parameters, body);
+    return new Expr.Funct(parameters, body);
 //< parse-body
   }
 //< Functions parse-function
@@ -603,12 +616,22 @@ class Parser {
       consume(RIGHT_PAREN, "Expect ')' after expression.");
       return new Expr.Grouping(expr);
     }
+
+    if(match(FUN))return AnonymousFunction("function");
 //> primary-error
 
     throw error(peek(), "Expect expression.");
 //< primary-error
   }
 //< primary
+
+  private boolean checkNextToken(TokenType tokenType){
+   int NextToken = current +1;//next index
+   if((NextToken >= tokens.size()) || isAtEnd()) return false;//checks if token exists
+
+   return tokens.get(NextToken).type == tokenType;
+  }
+
 //> match
   private boolean match(TokenType... types) {
     for (TokenType type : types) {

@@ -75,8 +75,12 @@ public class Lox {
      }//Execute statement to be interpreted
      catch (Parser.ParseError error){//else creates new parser with same tokens, and parses it as a statement instead. This is how they are able to be distinguished differently.
          Parser Parsernew = new Parser(tokens);
-         interpreter.interpret(Parsernew.parse());
+         List<Stmt> stmnts = Parsernew.parse();
 
+
+         Resolver resolver = new Resolver(interpreter);
+         resolver.resolve(stmnts);
+         interpreter.interpret(stmnts);
      }
 
   }

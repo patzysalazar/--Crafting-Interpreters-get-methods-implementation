@@ -142,7 +142,7 @@ public Object evaluate(Expr expr) {
       LoxFunction function = new LoxFunction(method, environment);
 */
 //> interpreter-method-initializer
-      LoxFunction function = new LoxFunction(method, environment,
+      LoxFunction function = new LoxFunction(method.name.lexeme, method.funct,environment,
           method.name.lexeme.equals("init"));
 //< interpreter-method-initializer
       methods.put(method.name.lexeme, function);
@@ -187,14 +187,13 @@ public Object evaluate(Expr expr) {
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt) {
 /* Functions visit-function < Functions visit-closure
-    LoxFunction function = new LoxFunction(stmt);
+
 */
 /* Functions visit-closure < Classes construct-function
     LoxFunction function = new LoxFunction(stmt, environment);
 */
 //> Classes construct-function
-    LoxFunction function = new LoxFunction(stmt, environment,
-                                           false);
+    LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false);
 //< Classes construct-function
     environment.define(stmt.name.lexeme, function);
     return null;
@@ -426,6 +425,12 @@ public Object evaluate(Expr expr) {
   public Object visitLiteralExpr(Expr.Literal expr) {
     return expr.value;
   }
+  @Override
+  public Object visitFunctExpr(Expr.Funct expr){
+    return new LoxFunction(null, expr, environment, false);
+
+  }
+
 //< visit-literal
 //> Control Flow visit-logical
   @Override
