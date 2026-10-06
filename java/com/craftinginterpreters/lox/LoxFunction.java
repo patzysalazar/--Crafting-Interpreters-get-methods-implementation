@@ -34,7 +34,7 @@ class LoxFunction implements LoxCallable {
 //> Classes bind-instance
   LoxFunction bind(LoxInstance instance) {
     Environment environment = new Environment(closure);
-    environment.define("this", instance);
+    environment.define(0, instance);
 /* Classes bind-instance < Classes lox-function-bind-with-initializer
     return new LoxFunction(declaration, environment);
 */
@@ -71,7 +71,7 @@ class LoxFunction implements LoxCallable {
     Environment environment = new Environment(closure);
 //< call-closure
     for (int i = 0; i < declaration.param.size(); i++) {
-      environment.define(declaration.param.get(i).lexeme,
+      environment.define(i,
           arguments.get(i));
     }
 
@@ -83,7 +83,7 @@ class LoxFunction implements LoxCallable {
       interpreter.executeBlock(declaration.body, environment);
     } catch (Return returnValue) {
 //> Classes early-return-this
-      if (isInitializer) return closure.getAt(0, "this");
+      if (isInitializer) return closure.getAt(0, 0);
 
 //< Classes early-return-this
       return returnValue.value;
@@ -91,7 +91,7 @@ class LoxFunction implements LoxCallable {
 //< catch-return
 //> Classes return-this
 
-    if (isInitializer) return closure.getAt(0, "this");
+    if (isInitializer) return closure.getAt(0, 0);//index 0 and distance 0
 //< Classes return-this
     return null;
   }

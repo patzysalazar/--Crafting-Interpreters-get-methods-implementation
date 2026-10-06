@@ -1,14 +1,25 @@
 //> Statements and State environment-class
 package com.craftinginterpreters.lox;
-
+//environment - stores and looks at local variables using array slots
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-class Environment {
+class Environment {//store values
+    //A more efficient environment representation would store local variables in an array and look them up by index.
 //> enclosing-field
   final Environment enclosing;
 //< enclosing-field
   private final Map<String, Object> values = new HashMap<>();
+  private final Object[] val = new Object[21];
+//setup array and method for storing values
+  void define(int index, Object vals){//put value in slot - array
+      val[index] = vals;
+  }
+  void define(String names,Object vals){
+     values.put(names,vals);
+  }
 //> environment-constructors
   Environment() {
     enclosing = null;
@@ -53,9 +64,7 @@ class Environment {
   }
 //< environment-assign
 //> environment-define
-  void define(String name, Object value) {
-    values.put(name, value);
-  }
+
 //< environment-define
 //> Resolving and Binding ancestor
   Environment ancestor(int distance) {
@@ -68,13 +77,13 @@ class Environment {
   }
 //< Resolving and Binding ancestor
 //> Resolving and Binding get-at
-  Object getAt(int distance, String name) {
-    return ancestor(distance).values.get(name);
+  Object getAt(int distance, int index) {
+    return ancestor(distance).val[index];//retrieve value from slot - array
   }
 //< Resolving and Binding get-at
 //> Resolving and Binding assign-at
-  void assignAt(int distance, Token name, Object value) {
-    ancestor(distance).values.put(name.lexeme, value);
+  void assignAt(int distance, int index, Object value) {
+    ancestor(distance).val[index] = value; //change a value - array
   }
 //< Resolving and Binding assign-at
 //> omit

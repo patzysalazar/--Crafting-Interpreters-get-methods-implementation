@@ -148,6 +148,7 @@ abstract class Stmt {
     Var(Token name, Expr initializer) {
       this.name = name;
       this.initializer = initializer;
+
     }
 
     @Override
@@ -157,6 +158,7 @@ abstract class Stmt {
 
     final Token name;
     final Expr initializer;
+
   }
 //< stmt-var
 //> stmt-while

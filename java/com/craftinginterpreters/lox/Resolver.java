@@ -1,11 +1,11 @@
 //> Resolving and Binding resolver
 package com.craftinginterpreters.lox;
-
+//resolver- finds variables and assigns their depth and index - from resolver
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
-
+//distance - where var is in environment, index - which var to get from the specific environment
 class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   private final Interpreter interpreter;
 //> scopes-field
@@ -56,11 +56,12 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
       resolve(statement);
     }
   }
+
 //< resolve-statements
     public static class Variable{
       Token name;
       boolean declared, defined, read;//tracks vars 3 states, later on can use for errors
-
+      int index;//add index for 4th qs.
     }
 
     @Override
@@ -167,9 +168,13 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 //> visit-function-stmt
   @Override
   public Void visitFunctionStmt(Stmt.Function stmt) {
-    declare(stmt.name);
-    define(stmt.name);
-
+    int index = declare(stmt.name);
+    if(scopes.size() == 0){
+        define(stmt.name);
+    }else{
+        interpreter.resolve(stmt,index);
+        define(stmt.name);
+    }
 /* Resolving and Binding visit-function-stmt < Resolving and Binding pass-function-type
     resolveFunction(stmt);
 */
@@ -219,14 +224,25 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 //< visit-return-stmt
 //> visit-var-stmt
+
   @Override
-  public Void visitVarStmt(Stmt.Var stmt) {
-    declare(stmt.name);
-    if (stmt.initializer != null) {
-      resolve(stmt.initializer);
+  public Void visitVarStmt(Stmt.Var stmt) {//variable declaration with index
+    int index = declare(stmt.name);//declare variable - index = #
+    if (stmt.initializer != null) {//resolve the initializer - figures out where vars in expression are, what scopes the rest are
+      resolve(stmt.initializer);//ex =  a+1
+
     }
-    define(stmt.name);
-    return null;
+    if(scopes.size() == 0){//global
+        //if there are 0 local scopes then the var is global var
+        define(stmt.name);//var defined in resolver, declared
+        return null;
+    }
+    else{//local
+        interpreter.resolve(stmt, index);//since local, var declared has index of...
+        define(stmt.name);//var defined in resolver
+        return null;//index only for local
+    }
+
   }
 //< visit-var-stmt
 //> visit-while-stmt
@@ -416,8 +432,8 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
   }
 //< end-scope
 //> declare
-  private void declare(Token name) {
-    if (scopes.isEmpty()) return;
+  private int declare(Token name) {
+    if (scopes.isEmpty()) return -1;//returns int index and can be used in visit var smnt
 
     Map<String, Variable> scope = scopes.peek();
 //> duplicate-variable
@@ -429,7 +445,9 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 //< duplicate-variable
     Variable var = new Variable();//var object created
     var.name = name;//vars token saved
+    var.index = scope.size();
     scope.put(name.lexeme, var);//stores object using vars name
+    return var.index;
   }
 //< declare
 //> define
@@ -443,7 +461,7 @@ class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     for (int i = scopes.size() - 1; i >= 0; i--) {//if scope contains var
       if (scopes.get(i).containsKey(name.lexeme)) {
         scopes.get(i).get(name.lexeme).read = true;//if read mark true  since used/read
-        interpreter.resolve(expr, scopes.size() - 1 - i);//updates on changing bool to var for beginscope, declared and define
+        interpreter.resolve(expr, scopes.size() - 1 - i, scopes.get(i).get(name.lexeme).index);//expr, distance of env, index to find value inside env
         return;
       }
     }

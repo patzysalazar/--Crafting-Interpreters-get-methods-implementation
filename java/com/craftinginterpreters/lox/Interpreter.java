@@ -1,7 +1,7 @@
 //> Evaluating Expressions interpreter-class
 package com.craftinginterpreters.lox;
 //> Statements and State import-list
-
+//interpreter - using depth and index
 //> Functions import-array-list
 import java.util.ArrayList;
 //< Functions import-array-list
@@ -30,7 +30,12 @@ class Interpreter implements Expr.Visitor<Object>,
 //< Functions global-environment
 //> Resolving and Binding locals-field
   private final Map<Expr, Integer> locals = new HashMap<>();
-//< Resolving and Binding locals-field
+  //keep both separate
+  private final Map<Expr, Integer> indexes = new HashMap<>();//stored indexes within the scope, added map to since resolver needs to remember both
+  private final Map<Stmt.Var, Integer> declareVar = new HashMap<>();
+  private final Map<Stmt.Function, Integer> declareFnct = new HashMap<>();
+
+    //< Resolving and Binding locals-field
 //> Statements and State environment-field
   private static Object uninitializedVar = new Object();
 //< Statements and State environment-field
@@ -86,10 +91,19 @@ public Object evaluate(Expr expr) {
   }
 //< Statements and State execute
 //> Resolving and Binding resolve
-  void resolve(Expr expr, int depth) {
+  void resolve(Expr expr, int depth, int index) {
     locals.put(expr, depth);
+    indexes.put(expr, index);//added
   }
-//< Resolving and Binding resolve
+  void resolve(Stmt.Var statement, int index){
+    declareVar.put(statement,index);
+  }
+  void resolve(Stmt.Function stmnt, int index){
+        declareFnct.put(stmnt, index);
+  }
+
+
+    //< Resolving and Binding resolve
 //> Statements and State execute-block
   void executeBlock(List<Stmt> statements,
                     Environment environment) {
@@ -131,7 +145,7 @@ public Object evaluate(Expr expr) {
 
     if (stmt.superclass != null) {
       environment = new Environment(environment);
-      environment.define("super", superclass);
+      environment.define(0, superclass);
     }
 //< Inheritance begin-superclass-environment
 //> interpret-methods
@@ -195,8 +209,13 @@ public Object evaluate(Expr expr) {
 //> Classes construct-function
     LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false);
 //< Classes construct-function
-    environment.define(stmt.name.lexeme, function);
-    return null;
+      if(declareFnct.get(stmt) == null){//global fcn
+          environment.define(stmt.name.lexeme, function);//store by name
+      }
+        else{//local fcn
+          environment.define(declareFnct.get(stmt), function);//store by index
+      }
+      return null;
   }
 //< Functions visit-function
 //> Control Flow visit-if
@@ -230,12 +249,18 @@ public Object evaluate(Expr expr) {
 //> Statements and State visit-var
   @Override
   public Void visitVarStmt(Stmt.Var stmt) {
+
     Object value = uninitializedVar;
     if (stmt.initializer != null) {
       value = evaluate(stmt.initializer);
     }
+    if(declareVar.get(stmt) == null){
+        environment.define(stmt.name.lexeme, value);
 
-    environment.define(stmt.name.lexeme, value);
+    }
+    else {
+        environment.define(declareVar.get(stmt), value);
+    }
     return null;
   }
 //< Statements and State visit-var
@@ -260,11 +285,12 @@ public Object evaluate(Expr expr) {
     environment.assign(expr.name, value);
 */
 //> Resolving and Binding resolved-assign
-
+//changes value of existing variable but now with index and distance instead of name
     Integer distance = locals.get(expr);
+    Integer index = indexes.get(expr);
     if (distance != null) {
-      environment.assignAt(distance, expr.name, value);
-    } else {
+      environment.assignAt(distance,index, value);
+    } else {//if global var use name
       globals.assign(expr.name, value);
     }
 
@@ -466,11 +492,11 @@ public Object evaluate(Expr expr) {
   public Object visitSuperExpr(Expr.Super expr) {
     int distance = locals.get(expr);
     LoxClass superclass = (LoxClass)environment.getAt(
-        distance, "super");
+        distance, 0);
 //> super-find-this
 
     LoxInstance object = (LoxInstance)environment.getAt(
-        distance - 1, "this");
+        distance - 1, 0);
 //< super-find-this
 //> super-find-method
 
@@ -520,7 +546,8 @@ public Object evaluate(Expr expr) {
 /* Statements and State visit-variable < Resolving and Binding call-look-up-variable
     return environment.get(expr.name);
     //current environment object retrieves var value to use for comparison to initialized value, if no value then error
-*/  if(environment.get(expr.name) == uninitializedVar){
+*/  if(lookUpVariable(expr.name, expr) == uninitializedVar){//check values
+    //where that value is stored
     //throw runtime error if the variable is not initialized
       throw new RuntimeError(expr.name, "You must initialize a variable before using");
 
@@ -528,7 +555,7 @@ public Object evaluate(Expr expr) {
 //> Resolving and Binding call-look-up-variable
       //else return the initialized value
     else {
-      return environment.get(expr.name);
+      return lookUpVariable(expr.name, expr);//how lox find local var value when used
       }
 //< Resolving and Binding call-look-up-variable
   }
@@ -536,7 +563,7 @@ public Object evaluate(Expr expr) {
   private Object lookUpVariable(Token name, Expr expr) {
     Integer distance = locals.get(expr);
     if (distance != null) {
-      return environment.getAt(distance, name.lexeme);
+      return environment.getAt(distance, indexes.get(expr));
     } else {
       return globals.get(name);
     }
