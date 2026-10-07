@@ -13,6 +13,9 @@ class LoxInstance {
   LoxInstance(LoxClass klass) {
     this.klass = klass;
   }
+  LoxInstance(){
+      super();
+  }
 
 //> lox-instance-get-property
   Object get(Token name) {
@@ -33,6 +36,8 @@ class LoxInstance {
     throw new RuntimeError(name, // [hidden]
         "Undefined property '" + name.lexeme + "'.");
   }
+
+
 //< lox-instance-get-property
 //> lox-instance-set-property
   void set(Token name, Object value) {

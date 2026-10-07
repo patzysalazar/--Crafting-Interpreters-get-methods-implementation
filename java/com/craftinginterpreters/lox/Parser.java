@@ -94,7 +94,7 @@ class Parser {
 //> Functions match-fun
       if (check(FUN) && checkNextToken(IDENTIFIER)){
        consume(FUN, null) ;
-       return function("function");
+       return function("function", false);
         }
 //< Functions match-fun
       if (match(VAR)) return varDeclaration();
@@ -122,7 +122,13 @@ class Parser {
 
     List<Stmt.Function> methods = new ArrayList<>();
     while (!check(RIGHT_BRACE) && !isAtEnd()) {
-      methods.add(function("method"));
+    if(match(CLASS) ){
+      methods.add(function("method", true));
+      }
+      else{
+      methods.add(function("method", false));
+    }
+
     }
 
     consume(RIGHT_BRACE, "Expect '}' after class body.");
@@ -303,9 +309,9 @@ class Parser {
   }
 //< Statements and State parse-expression-statement
 //> Functions parse-function
-  private Stmt.Function function(String kind){
+  private Stmt.Function function(String kind, boolean stat){//method static or not? bool
     Token name = consume(IDENTIFIER, "Expect '(' "+ kind +" fun.");
-    return new Stmt.Function(name, functBody(kind));
+    return new Stmt.Function(name, functBody(kind), stat);
   }
   private Expr.Funct AnonymousFunction(String kind){
     //Token name = consume(IDENTIFIER, "Expect '(' "+ kind +" fun.");

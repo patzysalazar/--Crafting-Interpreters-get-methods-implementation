@@ -20,16 +20,19 @@ class LoxFunction implements LoxCallable {
 //> Classes is-initializer-field
   private final boolean isInitializer;
   private final String name;
-
+  private final boolean stat;//added stat field, added stat to constructor, stored value
+// added bool to know if fcn is static
   LoxFunction(String name, Expr.Funct declaration, Environment closure,
-              boolean isInitializer) {
+              boolean isInitializer, boolean stat) {
     this.name = name;
     this.isInitializer = isInitializer;
+
 //< Classes is-initializer-field
 //> closure-constructor
     this.closure = closure;
 //< closure-constructor
     this.declaration = declaration;
+    this.stat = stat;
   }
 //> Classes bind-instance
   LoxFunction bind(LoxInstance instance) {
@@ -40,7 +43,7 @@ class LoxFunction implements LoxCallable {
 */
 //> lox-function-bind-with-initializer
     return new LoxFunction(name, declaration, environment,
-                           isInitializer);
+                           isInitializer, stat);
 //< lox-function-bind-with-initializer
   }
 //< Classes bind-instance

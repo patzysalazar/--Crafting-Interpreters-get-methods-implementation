@@ -151,15 +151,24 @@ public Object evaluate(Expr expr) {
 //> interpret-methods
 
     Map<String, LoxFunction> methods = new HashMap<>();
+    Map<String, LoxFunction> statMethods = new HashMap<>();
+//new stat method map to use like methods
     for (Stmt.Function method : stmt.methods) {
 /* Classes interpret-methods < Classes interpreter-method-initializer
       LoxFunction function = new LoxFunction(method, environment);
 */
 //> interpreter-method-initializer
       LoxFunction function = new LoxFunction(method.name.lexeme, method.funct,environment,
-          method.name.lexeme.equals("init"));
+          method.name.lexeme.equals("init"), method.stat);
 //< interpreter-method-initializer
-      methods.put(method.name.lexeme, function);
+      //methods.put(method.name.lexeme, function);
+        if(method.stat){//add if else stmnt to know which method to call
+          statMethods.put(method.name.lexeme, function);//called on the class itself
+        }
+        else{
+          methods.put(method.name.lexeme, function);//called on object
+        }
+
     }
 
 /* Classes interpret-methods < Inheritance interpreter-construct-class
@@ -167,7 +176,7 @@ public Object evaluate(Expr expr) {
 */
 //> Inheritance interpreter-construct-class
     LoxClass klass = new LoxClass(stmt.name.lexeme,
-        (LoxClass)superclass, methods);
+        (LoxClass)superclass, methods, statMethods);
 //> end-superclass-environment
 
     if (superclass != null) {
@@ -207,7 +216,7 @@ public Object evaluate(Expr expr) {
     LoxFunction function = new LoxFunction(stmt, environment);
 */
 //> Classes construct-function
-    LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false);
+    LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false, stmt.stat);
 //< Classes construct-function
       if(declareFnct.get(stmt) == null){//global fcn
           environment.define(stmt.name.lexeme, function);//store by name
@@ -434,10 +443,15 @@ public Object evaluate(Expr expr) {
     Object object = evaluate(expr.object);
     if (object instanceof LoxInstance) {
       return ((LoxInstance) object).get(expr.name);
+    } else if (object instanceof LoxClass){//added implementation of static methods called from LoxClass
+      return ((LoxClass) object).get(expr.name);
+        
     }
+    else {
 
-    throw new RuntimeError(expr.name,
-        "Only instances have properties.");
+        throw new RuntimeError(expr.name,
+                "Only instances have properties.");
+    }
   }
 //< Classes interpreter-visit-get
 //> visit-grouping
@@ -453,8 +467,8 @@ public Object evaluate(Expr expr) {
   }
   @Override
   public Object visitFunctExpr(Expr.Funct expr){
-    return new LoxFunction(null, expr, environment, false);
-
+    return new LoxFunction(null, expr, environment, false, false);
+//not stat
   }
 
 //< visit-literal

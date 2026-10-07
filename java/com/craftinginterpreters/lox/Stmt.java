@@ -40,6 +40,7 @@ abstract class Stmt {
       this.name = name;
       this.superclass = superclass;
       this.methods = methods;
+      this.stat = false;
     }
 
     @Override
@@ -50,6 +51,7 @@ abstract class Stmt {
     final Token name;
     final Expr.Variable superclass;
     final List<Stmt.Function> methods;
+    final boolean stat;
   }
   static class Break extends Stmt{
       Break(){}
@@ -78,10 +80,11 @@ abstract class Stmt {
 //> stmt-function
     // changed this to store only what the function and anonymous function share
   static class Function extends Stmt {
-    Function( Token name, Expr.Funct funct) {
+    Function( Token name, Expr.Funct funct, boolean stat) {
       //this.name = name;
       this.name = name;
       this.funct = funct;
+      this.stat = stat;
     }
 
 
@@ -93,6 +96,7 @@ abstract class Stmt {
     //final Token name;
     final Token name;
     final Expr.Funct funct;
+    final boolean stat;
   }
 //< stmt-function
 //> stmt-if
