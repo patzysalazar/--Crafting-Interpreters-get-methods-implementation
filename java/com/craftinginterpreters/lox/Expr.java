@@ -91,9 +91,10 @@ abstract class Expr {
 //adding a constructor to setup AF - allows fcn object to be created and initialized with param and body
     //Anonymous function now is an expression
   static class Funct extends Expr{
-    Funct(List<Token> param, List<Stmt> body) {
+    Funct(List<Token> param, List<Stmt> body, boolean get) {// if getter - true, else false
          this.param = param;
          this.body = body;
+         this.get = get;
     }
 
     @Override
@@ -103,6 +104,7 @@ abstract class Expr {
 
     final List<Token> param;
     final List<Stmt> body;
+    final boolean get;
 
   }
 

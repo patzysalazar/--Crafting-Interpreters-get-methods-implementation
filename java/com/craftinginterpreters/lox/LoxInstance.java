@@ -29,7 +29,15 @@ class LoxInstance {
     if (method != null) return method;
 */
 //> lox-instance-bind-method
-    if (method != null) return method.bind(this);
+      if(method != null) {
+          if(method.bind(this).get){
+//get????????
+          }
+          return method.bind(this);
+      }
+
+
+      //  return method.bind(this);
 //< lox-instance-bind-method
 
 //< lox-instance-get-method

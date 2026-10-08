@@ -159,7 +159,7 @@ public Object evaluate(Expr expr) {
 */
 //> interpreter-method-initializer
       LoxFunction function = new LoxFunction(method.name.lexeme, method.funct,environment,
-          method.name.lexeme.equals("init"), method.stat);
+          method.name.lexeme.equals("init"), method.stat, method.funct.get);//determines if method s a getter
 //< interpreter-method-initializer
       //methods.put(method.name.lexeme, function);
         if(method.stat){//add if else stmnt to know which method to call
@@ -216,7 +216,7 @@ public Object evaluate(Expr expr) {
     LoxFunction function = new LoxFunction(stmt, environment);
 */
 //> Classes construct-function
-    LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false, stmt.stat);
+    LoxFunction function = new LoxFunction(stmt.name.lexeme, stmt.funct, environment, false, stmt.stat, stmt.funct.get);
 //< Classes construct-function
       if(declareFnct.get(stmt) == null){//global fcn
           environment.define(stmt.name.lexeme, function);//store by name
@@ -442,7 +442,15 @@ public Object evaluate(Expr expr) {
   public Object visitGetExpr(Expr.Get expr) {
     Object object = evaluate(expr.object);
     if (object instanceof LoxInstance) {
-      return ((LoxInstance) object).get(expr.name);
+       Object val = ((LoxInstance)object).get(expr.name);//gets name
+       if(val instanceof LoxFunction){//if Loxfunction
+           if(((LoxFunction)val).get){//if loxfunction is getter
+              return  ((LoxFunction)val).call(this, new ArrayList<>());//call the fcn
+           }
+
+       }
+       return val;
+      //return ((LoxInstance) object).get(expr.name);
     } else if (object instanceof LoxClass){//added implementation of static methods called from LoxClass
       return ((LoxClass) object).get(expr.name);
         
@@ -452,6 +460,7 @@ public Object evaluate(Expr expr) {
         throw new RuntimeError(expr.name,
                 "Only instances have properties.");
     }
+
   }
 //< Classes interpreter-visit-get
 //> visit-grouping
@@ -467,7 +476,7 @@ public Object evaluate(Expr expr) {
   }
   @Override
   public Object visitFunctExpr(Expr.Funct expr){
-    return new LoxFunction(null, expr, environment, false, false);
+    return new LoxFunction(null, expr, environment, false, false, expr.get);//expects get now
 //not stat
   }
 

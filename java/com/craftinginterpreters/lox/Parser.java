@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.craftinginterpreters.lox.TokenType.*;
-
+//parser to see valid syntax
 class Parser {
 //> parse-error
   public static class ParseError extends RuntimeException {}
@@ -322,26 +322,37 @@ class Parser {
   private Expr.Funct functBody(String kind) {
     //Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
 //> parse-parameters
-    consume(LEFT_PAREN, "Expect '(' "+ kind +" fun.");
     List<Token> parameters = new ArrayList<>();
-    if (!check(RIGHT_PAREN)) {
-      do {
-        if (parameters.size() >= 255) {
-          error(peek(), "Can't have more than 255 parameters.");
-        }
+    boolean get;//boolean getter added to identify and determine it is a getter
 
-        parameters.add(
-            consume(IDENTIFIER, "Expect parameter name."));
-      } while (match(COMMA));
-    }
-    consume(RIGHT_PAREN, "Expect ')' after parameters.");
+    if(check(LEFT_PAREN)) {// if there is a parenthesis parse parameters
+        get = false;
+        //here getter is false because it is not a getter and has parenthesis and parameters, so do no look at this logic
+        consume(LEFT_PAREN, "Expect '(' " + kind + " fun.");
+        //List<Token> parameters = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                if (parameters.size() >= 255) {
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.add(
+                        consume(IDENTIFIER, "Expect parameter name."));
+            } while (match(COMMA));
+        }
+        consume(RIGHT_PAREN, "Expect ')' after parameters.");
 //< parse-parameters
 //> parse-body
 
-    consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
-    List<Stmt> body = block();
-    return new Expr.Funct(parameters, body);
+        }
+        else{
+            get = true;// if no parenthesis and parameters then this is a getter
+        }// if it does not have parenthesis go straight to {}body
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        return new Expr.Funct(parameters, body, get);
 //< parse-body
+
   }
 //< Functions parse-function
 //> Statements and State block
